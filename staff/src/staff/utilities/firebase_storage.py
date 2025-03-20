@@ -1,3 +1,4 @@
+from datetime import datetime
 import os
 from firebase_admin import storage, credentials, initialize_app
 from dotenv import load_dotenv
@@ -12,7 +13,7 @@ def initialize_firebase_storage():
     """
     try:
         # Get the path to the Firebase credentials file
-        cred_path = os.getenv('FIREBASE_APPLICATION_CREDENTIALS')
+        cred_path = './src/staff/utilities/fac.json'
         
         if not cred_path:
             raise ValueError("FIREBASE_APPLICATION_CREDENTIALS not found in environment variables")
@@ -31,6 +32,7 @@ def initialize_firebase_storage():
         
         # Get the storage bucket
         bucket = storage.bucket()
+        print(f"Firebase Storage bucket initialized")
         return bucket
         
     except Exception as e:
@@ -39,3 +41,25 @@ def initialize_firebase_storage():
 
 # Create a singleton instance of the storage bucket
 storage_bucket = initialize_firebase_storage() 
+
+def upload_to_firebase(file_path, user_id):
+    """Upload the generated report to Firebase Storage"""
+    try:
+        # Get the path to the report file
+        
+        
+        if not os.path.exists(file_path):
+            print(f"File not found at: {file_path}")
+            return
+        
+        # Generate a unique filename with timestamp
+        firebase_path = f'{user_id}/base_files/report.md'
+        
+        # Upload the file
+        blob = storage_bucket.blob(firebase_path)
+        blob.upload_from_filename(file_path)
+        print(f"Successfully uploaded report to Firebase Storage: {firebase_path}")
+        
+    except Exception as e:
+        print(f"Error uploading to Firebase Storage: {str(e)}")
+        

@@ -1,5 +1,6 @@
 from crewai import Agent, Crew, Process, Task
 from crewai.project import CrewBase, agent, crew, task
+import os
 
 @CrewBase
 class Staff():
@@ -29,9 +30,13 @@ class Staff():
 
     @task
     def reporting_task(self) -> Task:
+        # Create results directory if it doesn't exist
+        results_dir = os.path.join(os.path.dirname(__file__), 'results')
+        os.makedirs(results_dir, exist_ok=True)
+        
         return Task(
             config=self.tasks_config['reporting_task'],
-            output_file='report.md'
+            output_file=os.path.join(results_dir, 'report.md')
         )
 
     @crew
