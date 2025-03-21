@@ -5,5 +5,5 @@ firebase-admin>=6.2.0
 google-cloud-pubsub>=2.18.0
 pysbd>=0.3.4
 pyyaml>=6.0.1
-hatchling>=1.21.1 
-gunicorn==20.1.0
+hatchling>=1.21.1
+gunicorn>=21.2.0

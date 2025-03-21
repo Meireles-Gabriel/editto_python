@@ -6,26 +6,22 @@ from dotenv import load_dotenv
 # Load environment variables
 load_dotenv()
 
-def initialize_firebase_storage():
+def initialize_firebase_storage(running_locally):
     """
     Initialize Firebase Storage connection using credentials from environment variables.
     Returns the storage bucket instance.
     """
     try:
-        # Get the path to the Firebase credentials file
-        cred_path = './src/staff/utilities/fac.json'
-        
-        if not cred_path:
-            raise ValueError("FIREBASE_APPLICATION_CREDENTIALS not found in environment variables")
-        
-        # Convert relative path to absolute path
-        # Get the directory where this file is located
-        current_dir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
-        # Construct absolute path to credentials file
-        abs_cred_path = os.path.join(current_dir, cred_path)
-        
+        if running_locally:
+            cred_path = os.path.join(os.path.dirname(__file__), 'fac.json')
+        else:
+            cred_path = '/app/fac.json'
+            
+        if not os.path.exists(cred_path):
+            raise FileNotFoundError(f"Firebase credentials file not found at: {cred_path}")
+            
         # Initialize Firebase Admin SDK with credentials
-        cred = credentials.Certificate(abs_cred_path)
+        cred = credentials.Certificate(cred_path)
         initialize_app(cred, {
             'storageBucket': os.getenv('FIREBASE_STORAGE_BUCKET')
         })
@@ -37,20 +33,16 @@ def initialize_firebase_storage():
         
     except Exception as e:
         print(f"Error initializing Firebase Storage: {str(e)}")
-        raise
+        raise  # Re-raise the exception to handle it in the calling code
 
-# Create a singleton instance of the storage bucket
-storage_bucket = initialize_firebase_storage() 
-
-def upload_to_firebase(file_path, user_id):
+def upload_to_firebase(storage_bucket, file_path, user_id):
     """Upload the generated report to Firebase Storage"""
     try:
-        # Get the path to the report file
-        
-        
+        if storage_bucket is None:
+            raise ValueError("Firebase Storage bucket is not initialized")
+            
         if not os.path.exists(file_path):
             print(f"File not found at: {file_path}")
-            return
         
         # Generate a unique filename with timestamp
         firebase_path = f'{user_id}/base_files/report.md'
@@ -62,4 +54,5 @@ def upload_to_firebase(file_path, user_id):
         
     except Exception as e:
         print(f"Error uploading to Firebase Storage: {str(e)}")
+        raise  # Re-raise the exception to handle it in the calling code
         

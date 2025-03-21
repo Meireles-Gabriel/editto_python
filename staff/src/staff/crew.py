@@ -33,11 +33,30 @@ class Staff():
         # Create results directory if it doesn't exist
         results_dir = os.path.join(os.path.dirname(__file__), 'results')
         os.makedirs(results_dir, exist_ok=True)
-        
-        return Task(
+        report_path = os.path.join(results_dir, 'report.md')
+        print(f"Trying to save report to: {report_path}")
+
+        def task_function(task: Task, agent: Agent):
+            # Execute the reporting task logic here
+            report_content = agent.execute_task(task.description)
+
+            # Write the report content to the output file
+            with open(report_path, 'w') as f:
+                f.write(report_content)
+                
+            if not os.path.exists(report_path):
+                print(f"First attempt failed to save report to: {report_path}")
+                
+            return report_content
+
+        # Create the task
+        task = Task(
             config=self.tasks_config['reporting_task'],
-            output_file=os.path.join(results_dir, 'report.md')
+            output_file=report_path,
+            function=task_function
         )
+
+        return task
 
     @crew
     def crew(self) -> Crew:
@@ -45,5 +64,5 @@ class Staff():
             agents=self.agents,
             tasks=self.tasks,
             process=Process.sequential,
-            verbose=True,
+            verbose=False,
         )

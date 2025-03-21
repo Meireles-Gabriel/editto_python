@@ -1,22 +1,33 @@
-FROM python:3.9-slim
+# Use Python 3.10 as base image
+FROM python:3.10-slim
 
+# Set working directory
 WORKDIR /app
 
-# Copiar arquivos de dependências primeiro para aproveitar o cache
-COPY staff/src/staff/requirements.txt .
+# Install system dependencies
+RUN apt-get update && apt-get install -y \
+    build-essential \
+    && rm -rf /var/lib/apt/lists/*
 
-# Instalar dependências
+# Copy requirements first to leverage Docker cache
+COPY requirements.txt .
+
+# Install Python dependencies
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Copiar o restante do código
+# Copy the application code
 COPY staff/src/staff/ .
 
-# Configurar variáveis de ambiente
+COPY staff/src/staff/utilities/fac.json /app/fac.json
+
+COPY staff/src/staff/utilities/gac.json /app/gac.json
+
+# Set environment variables
 ENV PYTHONUNBUFFERED=1
 ENV PORT=8080
 
-# Expor porta utilizada pelo Cloud Run
+# Expose the port Cloud Run will use
 EXPOSE 8080
 
-# Comando para iniciar o aplicativo
+# Command to run the application with gunicorn
 CMD exec gunicorn --bind :$PORT --workers 1 --threads 8 --timeout 0 main:app
