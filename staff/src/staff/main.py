@@ -8,14 +8,14 @@ from crew import Staff
 from utilities.firebase_storage import initialize_firebase_storage, upload_to_firebase
 import os
 from google.cloud import pubsub_v1
+from globals import running_locally
+
 load_dotenv()
 
 warnings.filterwarnings("ignore", category=SyntaxWarning, module="pysbd")
 
-running_locally = False
-
-
 # Set up Google Cloud credentials
+
 if running_locally:
     gac_path = os.path.join(os.path.dirname(__file__), 'utilities', 'gac.json')
 else:
@@ -53,7 +53,10 @@ def run():
     }
     
     # Define results_dir outside try block so it's available in finally
-    results_dir = os.path.join(os.path.dirname(__file__), 'results')
+    if running_locally:
+        results_dir = os.path.join(os.path.dirname(__file__), 'results')
+    else:
+        results_dir = os.path.join('/tmp', 'results')
     report_path = os.path.join(results_dir, 'report.md')
     
     try:

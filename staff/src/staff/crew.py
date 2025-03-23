@@ -1,6 +1,7 @@
 from crewai import Agent, Crew, Process, Task
 from crewai.project import CrewBase, agent, crew, task
 import os
+from globals import running_locally
 
 @CrewBase
 class Staff():
@@ -31,7 +32,10 @@ class Staff():
     @task
     def reporting_task(self) -> Task:
         # Create results directory if it doesn't exist
-        results_dir = os.path.join(os.path.dirname(__file__), 'results')
+        if running_locally:
+            results_dir = os.path.join(os.path.dirname(__file__), 'results')
+        else:
+            results_dir = os.path.join('/tmp', 'results')
         os.makedirs(results_dir, exist_ok=True)
         report_path = os.path.join(results_dir, 'report.md')
         print(f"Trying to save report to: {report_path}")
