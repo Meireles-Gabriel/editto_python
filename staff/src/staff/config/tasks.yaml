@@ -1,17 +1,57 @@
-research_task:
-  description: >
-    Conduct a thorough research about {topic}
-    Make sure you find any interesting and relevant information given
-    the current year is {current_year}.
-  expected_output: >
-    A list with 10 bullet points of the most relevant information about {topic}
-  agent: researcher
 
-reporting_task:
+rewrite_articles_task:
   description: >
-    Review the context you got and expand each topic into a full section for a report.
-    Make sure the report is detailed and contains any and all relevant information.
+    Rewrite the following news article in a magazine style. Maintain the essence and facts,
+    but give it a more relaxed, engaging tone with subtle touches of humor. The text should
+    be clear, objective, and captivating, similar to modern editorial styles.It should be in {language}.
+    
+    Original title: {title}
+    Original content: {content}
+    Source: {source}
+    
+    Your output should include:
+    1. A new title (keep it concise and engaging)
+    2. The rewritten article
+    3. At the end, include a credit line with the original source and title
+    
+    It all should be in {language}.
+
+    Format your output exactly as follows:
+    NEW_TITLE: Your new title here
+    NEW_CONTENT: Your rewritten content here
+    ORIGINAL_SOURCE: The original source and title
+
   expected_output: >
-    A fully fledged report with the main topics, each with a full section of information.
-    Formatted as markdown without '```'
-  agent: reporting_analyst
+    A rewritten news article in magazine style with a new title, engaging content, 
+    and a credit line for the original source.
+    
+  agent: content_rewriter
+
+create_cover_content_task:
+  description: >
+    Create cover content for a magazine about {topic}. You have access to {n_news} news articles.
+    
+    First, identify the most relevant and impactful article from the list. For this article:
+    1. Create a single impactful word as the main headline
+    2. Create a catchy subheading based on the article (one short phrase)
+    
+    Then, select two other random articles and create a brief summary for each, 
+    consisting of exactly two short sentences per article.
+
+    It all should be in {language}.
+
+    Format your output exactly as follows:
+    MAIN_HEADLINE: Your single word here
+    SUBHEADING: Your catchy phrase here
+    MAIN_ARTICLE_INDEX: Index of the main article (0-based)
+    SUMMARY1_INDEX: Index of first summary article (0-based)
+    SUMMARY1: Your two-sentence summary here
+    SUMMARY2_INDEX: Index of second summary article (0-based)
+    SUMMARY2: Your two-sentence summary here
+
+  expected_output: >
+    Cover content including main headline, subheading, and brief summaries for two additional articles.
+    
+  agent: cover_designer
+
+
