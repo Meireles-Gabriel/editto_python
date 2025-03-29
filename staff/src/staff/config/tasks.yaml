@@ -2,9 +2,11 @@
 rewrite_articles_task:
   description: >
     Rewrite the following news article in a magazine style. Maintain the essence and facts,
-    but give it a more relaxed, engaging tone with subtle touches of humor. The text should
+    but give it a more engaging tone with subtle touches of humor. The text should
     be clear, objective, and captivating, similar to modern editorial styles.It should be in {language}.
-    
+    Remove any kind of publicity. Remove any mention to the source's name/site.
+    Remove any kind of markdown. Your output should be in plain text.
+
     Original title: {title}
     Original content: {content}
     Source: {source}
@@ -36,18 +38,18 @@ create_cover_content_task:
     2. Create a catchy subheading based on the article (one short phrase)
     
     Then, select two other random articles and create a brief summary for each, 
-    consisting of exactly two short sentences per article.
+    consisting of exactly ONE short sentence per article.
 
     It all should be in {language}.
 
     Format your output exactly as follows:
     MAIN_HEADLINE: Your single word here
     SUBHEADING: Your catchy phrase here
-    MAIN_ARTICLE_INDEX: Index of the main article (0-based)
-    SUMMARY1_INDEX: Index of first summary article (0-based)
-    SUMMARY1: Your two-sentence summary here
-    SUMMARY2_INDEX: Index of second summary article (0-based)
-    SUMMARY2: Your two-sentence summary here
+    MAIN_ARTICLE_INDEX: Index of the main article (0-based) NUMBER ONLY
+    SUMMARY1_INDEX: Index of first summary article (0-based) NUMBER ONLY
+    SUMMARY1: Your one-sentence summary here
+    SUMMARY2_INDEX: Index of second summary article (0-based) NUMBER ONLY
+    SUMMARY2: Your one-sentence summary here
 
   expected_output: >
     Cover content including main headline, subheading, and brief summaries for two additional articles.

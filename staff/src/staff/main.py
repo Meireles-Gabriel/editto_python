@@ -1,21 +1,24 @@
 #!/usr/bin/env python
-from urllib.parse import urlparse
+import os
+import json
+import random
+import types
 import warnings
 from datetime import datetime, timedelta
+from urllib.parse import urlparse
 from dotenv import load_dotenv
 from flask import Flask
 import requests
 from crew import Staff
-from utilities import process_rewritten_article
-from utilities import process_cover_content
+from utilities.process_rewritten_article import process_rewritten_article
+from utilities.process_cover_content import process_cover_content
 from utilities.firebase_storage import initialize_firebase_storage, upload_to_firebase
-import os
-import google.generativeai as genai
+from google import genai
+from google.genai import types
 from PIL import Image
+from google.cloud import pubsub_v1
 from io import BytesIO
 from base64 import b64encode
-from google.cloud import pubsub_v1
-import json
 import exa_py
 from globals import running_locally
 
@@ -31,14 +34,7 @@ else:
     gac_path = '/app/gac.json'
 os.environ['GOOGLE_APPLICATION_CREDENTIALS'] = gac_path
 
-# Create a singleton instance of the storage bucket
-try:
-    storage_bucket = initialize_firebase_storage(running_locally)
-    if storage_bucket is None:
-        raise Exception("Failed to initialize Firebase Storage bucket")
-except Exception as e:
-    print(f"Failed to initialize Firebase Storage: {e}")
-    storage_bucket = None
+
 
 app = Flask(__name__)
 
@@ -54,10 +50,18 @@ subscription_path = subscriber.subscription_path(project_id, 'news-processing-to
 @app.route('/run/<userID>/<language>/<topic>/<coins>')
 def run(userID, language, topic, coins):
     print(f"Received request with userID: {userID}, language: {language}, topic: {topic}, coins: {coins}")  # Debug print
-
+    # Create a singleton instance of the storage bucket
+    try:
+        storage_bucket = initialize_firebase_storage(running_locally)
+        if storage_bucket is None:
+            raise Exception("Failed to initialize Firebase Storage bucket")
+    except Exception as e:
+        print(f"Failed to initialize Firebase Storage: {e}")
+        storage_bucket = None
+        
     if storage_bucket is None:
         print("Firebase Storage is not initialized.")  # Debug print
-        return "Firebase Storage not initialized. Please check your credentials and try again.", 500
+        return "Firebase Storage not initialized. Please check your credentials and try again.", 300
             
     if coins == '1':
         n_news = 3
@@ -86,11 +90,12 @@ def run(userID, language, topic, coins):
             type="auto",
             category="news",
             num_results=n_news,
+            use_autoprompt=True,
             text=True,  # Get the full text content
             start_published_date=(datetime.now() - timedelta(days=period)).strftime('%m/%d/%Y'),
             end_published_date=datetime.now().strftime('%m/%d/%Y'),
             extras = {
-                "imageLinks": 3  # Request 1 image per result
+                "imageLinks": 3  # Request 3 image per result
             }
         )
         print(f"Search results obtained: {results}")  # Debug print
@@ -143,33 +148,31 @@ def run(userID, language, topic, coins):
 
         # Step 3: Rewrite the articles
         
-        # Initialize the magazine crew
-        magazine_crew = Staff().crew()
-        print("Magazine crew initialized.")  # Debug print
+        # Initialize the magazine crews
+        content_crew = Staff().content_crew()
+        design_crew = Staff().design_crew()
+        print("Magazine crews initialized.")  # Debug print
         
         rewritten_articles = []
         for article in articles:
             rewrite_inputs = {
+                'topic': topic,
                 'title': article['title'],
                 'content': article['text'],
                 'source': f"{article['source']} - {article['title']}",
                 'language': language
             }
-            print(f"Rewriting article with inputs: {rewrite_inputs}")  # Debug print
             
-            rewrite_result = magazine_crew.kickoff(
+            rewrite_result = content_crew.kickoff(
                 inputs=rewrite_inputs,
-                task=Staff().rewrite_articles_task()
             )
             print(f"Rewrite result: {rewrite_result}")  # Debug print
             
-            processed_result = process_rewritten_article(rewrite_result)
+            processed_result = process_rewritten_article(rewrite_result.raw)
             rewritten_articles.append({
                 'original': article,
                 'rewritten': processed_result
             })
-        
-        print(f"Rewritten articles: {rewritten_articles}")  # Debug print
         
         # Step 4: Create cover content
         cover_inputs = {
@@ -179,55 +182,62 @@ def run(userID, language, topic, coins):
             'language': language
         }
         
-        cover_result = magazine_crew.kickoff(
+        cover_result = design_crew.kickoff(
             inputs=cover_inputs,
-            task=Staff().create_cover_content_task()
         )
         print(f"Cover result: {cover_result}")  # Debug print
         
-        cover_content = process_cover_content(cover_result)
+        cover_content = process_cover_content(cover_result.raw)
         
-        # Step 5: Generate cover image using Gemini 2.0 Flash
-        # Configure the Gemini API
-        api_key = os.getenv("GEMINI_API_KEY")
-        if not api_key:
-            raise ValueError("Error: GOOGLE_API_KEY environment variable not set.")
+        # Step 5: Generate cover image using Imagen 3
+        client = genai.Client(api_key=os.environ.get("GEMINI_API_KEY"))
         
-        genai.configure(api_key=api_key)
+        subheading = cover_content['subheading']
+        print(f"Image subject: {subheading}")
+        
+        # layout_type = random.choice([1, 2, 3])
+        
+        # Base do prompt que será igual para todos os layouts
+        base_prompt = f"""
+        Ignore any previous generated images from previous iterations.
+        Create the described image from scratch:
+        
+        Create an image about this topic: "{subheading}".
+        
+        STYLE SPECIFICATIONS:
+        - high fashion photography aesthetic, crisp details, main image subject in the right
+        - high-definition, professional lighting, vibrant colors, sharp focus
+        """
+        
         
         try:
-            # Create a client instance
-            client = genai.Client()
-            print("Client instance created.")  # Debug print
-            
-            
-            content = rewritten_articles[cover_content['main_article_index']]['original']['text']
-            # Generate content using the specified model
-            response = client.models.generate_content(
-                model="gemini-2.0-flash-exp-image-generation",
-                contents=f"Generate a cover image for a magazine about {topic} based on this news article:{content}",
-                config=genai.types.GenerateContentConfig(
-                    response_modalities=['Text', 'Image']
+            response = client.models.generate_images(
+                model='imagen-3.0-generate-002',
+                prompt=base_prompt,
+                config=types.GenerateImagesConfig(
+                    number_of_images=1,
+                    aspect_ratio='3:4'
                 )
             )
-            print("Image generation response received.")  # Debug print
-            
-            # Assuming the response contains the image data
-            for part in response.candidates[0].content.parts:
-                if part.text is not None:
-                    print(part.text)
-                elif part.inline_data is not None:
-                    image_data = part.inline_data.data  # Ensure this is the correct type
-                    image = Image.open(BytesIO(image_data))
-            
-            # Convert image data to Base64
-            base64_image = b64encode(image.tobytes()).decode('utf-8')  # Convert bytes to Base64 string
-            
-            
-        except Exception as e:
-            raise RuntimeError(f"Error generating image: {str(e)}")
+            print("Image generation response received.")
 
-        print(f"Cover image generated: {base64_image}")  # Debug print
+            # Extract image from response
+            for generated_image in response.generated_images:
+                if generated_image.image.image_bytes:
+                    image = Image.open(BytesIO(generated_image.image.image_bytes))                   
+                    # Convert image data to Base64
+                    buffered = BytesIO()
+                    image.save(buffered, format="PNG")
+                    base64_image = b64encode(buffered.getvalue()).decode('utf-8')
+                    break
+            
+
+        except Exception as e:
+            print(f"Image generation error: {e}")
+            print(response)
+            raise RuntimeError(f"Failed to generate cover image: {str(e)}")
+        
+        print(f"Cover image generated: Trust me. It worked.")  # Debug print
         
         # Package all the results
         magazine_data = {
@@ -236,10 +246,10 @@ def run(userID, language, topic, coins):
             'period': period,
             'articles': rewritten_articles,
             'cover_content': cover_content,
-            'cover_image': base64_image
+            'cover_image': base64_image,
         }
         
-        print(f"Magazine data prepared for upload: {magazine_data}")  # Debug print
+        print(f"Magazine data prepared for upload.")  # Debug print
         
         # Upload to Firebase
         upload_to_firebase(storage_bucket, json.dumps(magazine_data), userID)

@@ -8,40 +8,46 @@ class Staff():
 
     @agent
     def content_rewriter(self) -> Agent:
-        print("Initializing content rewriter agent.")  # Debug print
         return Agent(
             config=self.agents_config['content_rewriter'],
-            verbose=True
+            verbose=False
         )
 
     @agent
     def cover_designer(self) -> Agent:
-        print("Initializing cover designer agent.")  # Debug print
         return Agent(
             config=self.agents_config['cover_designer'],
-            verbose=True
+            verbose=False
         )
 
     @task
     def rewrite_articles_task(self) -> Task:
-        print("Creating rewrite articles task.")  # Debug print
         return Task(
             config=self.tasks_config['rewrite_articles_task'],
         )
 
     @task
     def create_cover_content_task(self) -> Task:
-        print("Creating cover content task.")  # Debug print
         return Task(
             config=self.tasks_config['create_cover_content_task'],
         )
 
     @crew
-    def crew(self) -> Crew:
-        print("Initializing crew with agents and tasks.")  # Debug print
+    def content_crew(self) -> Crew:
+        print("Initializing content crew.")  # Debug print
         return Crew(
-            agents=[self.content_rewriter(), self.cover_designer()],
-            tasks=[self.rewrite_articles_task(), self.create_cover_content_task()],
+            agents=[self.content_rewriter()],
+            tasks=[self.rewrite_articles_task()],
             process=Process.sequential,
-            verbose=True,
+            verbose=False,
+        )
+
+    @crew
+    def design_crew(self) -> Crew:
+        print("Initializing design crew.")  # Debug print
+        return Crew(
+            agents=[self.cover_designer()],
+            tasks=[self.create_cover_content_task()],
+            process=Process.sequential,
+            verbose=False,
         )
