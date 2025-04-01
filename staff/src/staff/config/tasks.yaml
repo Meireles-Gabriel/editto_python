@@ -1,31 +1,41 @@
-
 rewrite_articles_task:
   description: >
-    Rewrite the following news article in a magazine style. Maintain the essence and facts,
-    but give it a more engaging tone with subtle touches of humor. The text should
-    be clear, objective, and captivating, similar to modern editorial styles.It should be in {language}.
-    Remove any kind of publicity. Remove any mention to the source's name/site.
-    Remove any kind of markdown. Your output should be in plain text.
+    Here are some news articles:
 
-    Original title: {title}
-    Original content: {content}
-    Source: {source}
+    {articles}
+
+    Some of them can have useless info, and some of them can share the same news.
+    I want you to write articles about them, each with relevant news, using the originals as resources.
+    If two or more articles are talking about the same thing, combine them into one.
+    Ignore the useless and irrelevant information and articles.
+    Try to write at least {n_news} articles.
+
+    Write them in a magazine style. Maintain the essence and facts,
+    but give it a more engaging tone. The text should be
+    clear, objective, and captivating, similar to modern editorial styles.
+    Remove any kind of publicity. Remove any mention of the source's name/site.
+    Remove any kind of markdown. Your output should be in plain text.
+    Each article should have at least 3 paragraphs.
+    The new articles should be in {language}.
     
-    Your output should include:
-    1. A new title (keep it concise and engaging)
-    2. The rewritten article
-    3. At the end, include a credit line with the original source and title
+    For each generated article, include:
+
+    1. A title (keep it concise and engaging)
+    2. The written article
+    3. A credit line with the original sources and titles, separated by ";". Example: tech.com - Tech's Title!;ai.com - AI's Title!
+    4. The article divider: ---ARTICLE DIVIDER---
     
-    It all should be in {language}.
+    The new articles should be in {language}.
 
     Format your output exactly as follows:
     NEW_TITLE: Your new title here
     NEW_CONTENT: Your rewritten content here
-    ORIGINAL_SOURCE: The original source and title
+    ORIGINAL_SOURCE: The credit line with the original sources and titles, separated by ";". Example: tech.com - Tech's Title!;ai.com - AI's Title!
+    ---ARTICLE DIVIDER---
 
   expected_output: >
-    A rewritten news article in magazine style with a new title, engaging content, 
-    and a credit line for the original source.
+    News articles in magazine style, each with a title, engaging content, 
+    a credit line for the original sources and the article divider.
     
   agent: content_rewriter
 
@@ -34,7 +44,7 @@ create_cover_content_task:
     Create cover content for a magazine about {topic}. You have access to {n_news} news articles.
     
     First, identify the most relevant and impactful article from the list. For this article:
-    1. Create a single impactful word as the main headline
+    1. Create a single impactful word as the main headline. Avoid the words "Revolution" and "Revolução"
     2. Create a catchy subheading based on the article (one short phrase)
     
     Then, select two other random articles and create a brief summary for each, 
