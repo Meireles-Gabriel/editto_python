@@ -6,6 +6,7 @@ from datetime import datetime, timedelta
 from urllib.parse import urlparse
 from dotenv import load_dotenv
 from flask import Flask, request, jsonify
+from flask_cors import CORS
 from crew import Staff
 from utilities.process_rewritten_article import process_rewritten_article
 from utilities.process_cover_content import process_cover_content
@@ -17,7 +18,6 @@ from io import BytesIO
 from base64 import b64encode
 import exa_py
 from globals import running_locally
-import re
 
 # Load environment variables
 # Carrega variáveis de ambiente
@@ -38,6 +38,22 @@ os.environ['GOOGLE_APPLICATION_CREDENTIALS'] = gac_path
 # Initialize Flask application
 # Inicializa a aplicação Flask
 app = Flask(__name__)
+
+# Configure CORS with proper headers
+# Configura CORS com os headers apropriados
+CORS(app, resources={
+    r"/*": {
+        "origins": ["*"],
+        "methods": ["GET", "POST", "OPTIONS"],
+        "allow_headers": ["Content-Type"],
+        "max_age": 3600
+    }
+})
+
+# Configure maximum content length
+# Configura o tamanho máximo do conteúdo
+app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024  # 16MB
+app.config['JSON_AS_ASCII'] = False  # Allow non-ASCII characters in JSON
 
 # Initialize Pub/Sub clients
 # Inicializa os clientes Pub/Sub
@@ -236,8 +252,8 @@ def create_magazine_raw_data(language, topic, period, rewritten_articles, cover_
 
 # Step 1: Initialize magazine creation process
 # Passo 1: Inicializa o processo de criação da revista
-@app.route('/init-magazine-process/<language>/<topic>/<coins>')
-def init_magazine_process(language, topic, coins):
+@app.route('/init-magazine-process-endpoint/<language>/<topic>/<coins>')
+def init_magazine_process_endpoint(language, topic, coins):
     """
     Initialize the magazine creation process with basic parameters.
     Inicializa o processo de criação da revista com parâmetros básicos.
@@ -275,8 +291,8 @@ def init_magazine_process(language, topic, coins):
 
 # Step 2: Fetch news articles
 # Passo 2: Busca artigos de notícias
-@app.route('/fetch-articles', methods=['POST'])
-def fetch_articles():
+@app.route('/fetch-articles-endpoint', methods=['POST'])
+def fetch_articles_endpoint():
     """
     Fetch relevant news articles based on the topic and parameters.
     Busca artigos de notícias relevantes com base no tópico e parâmetros.
@@ -324,8 +340,8 @@ def fetch_articles():
 
 # Step 3: Rewrite articles for magazine style
 # Passo 3: Reescreve artigos no estilo de revista
-@app.route('/rewrite-articles', methods=['POST'])
-def rewrite_articles():
+@app.route('/rewrite-articles-endpoint', methods=['POST'])
+def rewrite_articles_endpoint():
     """
     Rewrite news articles in magazine style using AI.
     Reescreve artigos de notícias no estilo de revista usando IA.
@@ -374,8 +390,8 @@ def rewrite_articles():
 
 # Step 4: Create magazine cover content
 # Passo 4: Cria conteúdo da capa da revista
-@app.route('/generate-cover-text', methods=['POST'])
-def generate_cover_text():
+@app.route('/generate-cover-text-endpoint', methods=['POST'])
+def generate_cover_text_endpoint():
     """
     Create magazine cover content (title, subtitle, highlights) using AI.
     Cria conteúdo da capa da revista (título, subtítulo, destaques) usando IA.
@@ -422,8 +438,8 @@ def generate_cover_text():
 
 # Step 5: Generate magazine cover image
 # Passo 5: Gera imagem da capa da revista
-@app.route('/generate-image', methods=['POST'])
-def generate_image():
+@app.route('/generate-image-endpoint', methods=['POST'])
+def generate_image_endpoint():
     """
     Generate magazine cover image using AI image generation.
     Gera imagem da capa da revista usando geração de imagem por IA.
@@ -468,8 +484,8 @@ def generate_image():
 
 # Step 6: Finalize and return the magazine
 # Passo 6: Finaliza e retorna a revista
-@app.route('/finalize-magazine-raw-data', methods=['POST'])
-def finalize_magazine_raw_data():
+@app.route('/finalize-magazine-raw-data-endpoint', methods=['POST'])
+def finalize_magazine_raw_data_endpoint():
     """
     Finalize the magazine creation and return the complete magazine data.
     Finaliza a criação da revista e retorna os dados completos da revista.
@@ -518,4 +534,4 @@ def finalize_magazine_raw_data():
 # Executa a aplicação Flask
 if __name__ == '__main__':
     port = int(os.environ.get("PORT", 8080))
-    app.run(host="0.0.0.0", port=port, debug=True)
+    app.run(host="0.0.0.0", port=port, debug=False)
