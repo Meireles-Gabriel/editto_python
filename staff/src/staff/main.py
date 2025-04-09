@@ -104,7 +104,7 @@ def fetch_articles(topic, n_news, period):
         end_published_date=datetime.now().strftime('%m/%d/%Y'),
     )
     if running_locally:
-        print(f"Search results obtained: {results}")
+        print(f"Search results obtained.")
 
     # Process and format articles from search results
     # Processa e formata os artigos dos resultados da pesquisa
@@ -121,7 +121,7 @@ def fetch_articles(topic, n_news, period):
         })
     
     if running_locally:
-        print(f"Extracted articles: {articles}")
+        print(f"Extracted articles.")
     return articles
 
 def rewrite_articles(articles, topic, n_news, language):
@@ -154,7 +154,7 @@ def rewrite_articles(articles, topic, n_news, language):
     # Inicia o processo de reescrita
     rewrite_result = content_crew.kickoff(inputs=rewrite_inputs)
     if running_locally:
-        print(f"New Articles: {rewrite_result.raw}")
+        print(f"New Articles generated.")
     
     # Process the raw output from AI
     # Processa a saída bruta da IA
@@ -184,7 +184,7 @@ def generate_cover_text(rewritten_articles, topic, language):
     # Inicia o processo de criação de conteúdo da capa
     cover_result = design_crew.kickoff(inputs=cover_inputs)
     if running_locally:
-        print(f"Cover result: {cover_result}")
+        print(f"Cover content defined.")
     
     # Process the raw output from AI
     # Processa a saída bruta da IA
@@ -202,7 +202,6 @@ def generate_cover_image(topic):
     # Create prompt for image generation
     # Cria o prompt para geração de imagem
     base_prompt = f"An image of an object related to '{topic}' as a sculpture made of crystal, set against a solid navy blue background, without texts, standard lens, 50mm, crisp details, in 4k resolution, under dramatic and professional lighting"
-    
     try:
         # Generate image with Imagen model
         # Gera imagem com o modelo Imagen

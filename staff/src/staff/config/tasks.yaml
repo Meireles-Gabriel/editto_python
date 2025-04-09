@@ -15,7 +15,7 @@ rewrite_articles_task:
     clear, objective, and captivating, similar to modern editorial styles.
     Remove any kind of publicity. Remove any mention of the source's name/site.
     Remove any kind of markdown. Your output should be in plain text.
-    Each article should have at least 3 paragraphs.
+    Each article should have at least 4 paragraphs.
     The new articles should be in {language}.
     
     For each generated article, include:
@@ -47,7 +47,7 @@ create_cover_content_task:
     1. Create a single impactful word as the main headline. Avoid the words "Revolution" and "Revolução"
     2. Create a catchy subheading based on the article (one short phrase)
     
-    Then, select two other random articles and create a brief summary for each, 
+    Then, select two other random articles and create a brief summary related to each, 
     consisting of exactly ONE short sentence per article.
 
     It all should be in {language}.
