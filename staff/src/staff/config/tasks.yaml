@@ -14,6 +14,7 @@ rewrite_articles_task:
     but give it a more engaging tone. The text should be
     clear, objective, and captivating, similar to modern editorial styles.
     Remove any kind of publicity. Remove any mention of the source's name/site.
+    Don't ask the reader's opinion nor to make any comment.
     Remove any kind of markdown. Your output should be in plain text.
     Each article should have at least 4 paragraphs.
     The new articles should be in {language}.
