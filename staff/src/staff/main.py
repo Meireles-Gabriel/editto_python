@@ -94,7 +94,7 @@ def fetch_articles(topic, n_news, period):
     # Search for news articles with given parameters
     # Pesquisa artigos de notícias com os parâmetros fornecidos
     results = exa.search_and_contents(
-        topic,
+        f"The most relevant news about ${topic}:",
         type="auto",
         category="news",
         num_results=n_news,
