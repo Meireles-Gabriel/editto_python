@@ -65,6 +65,19 @@ subscriber = pubsub_v1.SubscriberClient()
 project_id = os.getenv('GOOGLE_CLOUD_PROJECT_ID')
 topic_path = publisher.topic_path(project_id, 'news-processing-topic')
 subscription_path = subscriber.subscription_path(project_id, 'news-processing-topic-sub')
+def translate_topic_to_english(topic):
+    """
+    Translate topic to English using Gemini AI if needed.
+    """
+    client = genai.Client(api_key=os.environ.get("GEMINI_API_KEY"))
+    prompt = f"""If the following topic is not in English, translate it to English. If it's already in English, return only the original text.
+    Topic: {topic}
+    Return only the translated or original text, nothing else."""
+
+    response = client.models.generate_content(
+        model="gemini-2.0-flash", contents=prompt
+    )
+    return response.text.strip()
 
 def get_news_parameters(coins):
     """
@@ -258,25 +271,26 @@ def init_magazine_process_endpoint(language, topic, coins):
     Inicializa o processo de criação da revista com parâmetros básicos.
     """
     try:
+        # Translate topic to English
+        english_topic = translate_topic_to_english(topic)
+        if running_locally:
+            print(f"Topic translated: {english_topic}")
+            
         # Get article parameters based on coins
-        # Obtém os parâmetros de artigos com base nas moedas
         n_news, period = get_news_parameters(coins)
         if running_locally:
             print(f"Inputs prepared: n_news={n_news}, period={period}")
         
         # Create initial process data
-        # Cria dados iniciais do processo
         process_data = {
             'language': language,
-            'topic': topic,
+            'topic': english_topic,
             'coins': coins,
             'n_news': n_news,
             'period': period,
             'status': 'initialized'
         }
         
-        # Return process data and next step info
-        # Retorna dados do processo e informações do próximo passo
         return jsonify({
             'process_data': process_data,
             'status': 'initialized',
